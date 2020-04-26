@@ -107,7 +107,7 @@ bool(variable)
 // an override for the builtin damage function.
 DamageOverride(eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, vPoint, vDir, sHitLoc, timeOffset)
 {
-    if(!(isdefined(self.invulnerable) && self.invulnerable))
+    if(!bool(self.invulnerable))
         self [[ maps\mp\gametypes\_damage::Callback_PlayerDamage ]](eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, vPoint, vDir, sHitLoc, timeOffset);
     else
         self.health = self.maxhealth;
@@ -118,7 +118,7 @@ DamageOverride(eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, 
 // an override for the builtin death function.  
 PlayerKilledOverride(eInflictor, eAttacker, iDamage, sMeansOfDeath, sWeapon, vDir, sHitLoc, timeOffset, deathAnimDuration)
 {
-    if(!(isdefined(self.invulnerable) && self.invulnerable))
+    if(!bool(self.invulnerable))
         self [[ maps\mp\gametypes\_damage::Callback_PlayerKilled ]](eInflictor, eAttacker, iDamage, sMeansOfDeath, sWeapon, vDir, sHitLoc, timeOffset, deathAnimDuration);
     else
         self.health = self.maxhealth;
