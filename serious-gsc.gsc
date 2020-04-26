@@ -66,9 +66,6 @@ DisableInvulnerability()
 // determine if a player has pressed a given button.
 IsButtonPressed(button)
 {
-    if(!isdefined(button))
-        return false;
-    
     // non builtins
     if(button < 0x8)
         return self.slbutton[button];
@@ -92,6 +89,14 @@ IsButtonPressed(button)
     
     // shouldnt be possible but may as well
     return false;
+}
+
+// [CALLER] none
+// [variable] the variable to convert into a bool
+// Safely determine if the input variable is true
+bool(variable)
+{
+    return isdefined(variable) && int(variable);
 }
 #endregion
 
@@ -196,8 +201,6 @@ SButtonMonitor()
 // the builtin monitor for a specific non-builtin button
 slb_intern(button, onpressed)
 {
-    if(button > 0x7)
-        return;
     
     prefix = onpressed ? "+" : "-";
     
