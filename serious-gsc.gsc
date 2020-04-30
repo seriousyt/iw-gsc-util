@@ -104,29 +104,66 @@ bool(variable)
 }
 
 // [CALLER] player
+// [shader] The shader to draw (image). Note: This must be precached in init using 'precacheshader' for it to show up correctly.
 // [x] X position of the shader (relative to the align input)
 // [y] Y position of the shader (relative to the align input)
 // [width] Width of the shader
 // [height] Height of the shader
-// [shader] The shader to draw (image). Note: This must be precached in init using 'precacheshader' for it to show up correctly.
 // [color] Tint of the shader
+// [alpha] The opacity of the shader (0 to 1 scaled, 1 being completely opaque, and 0 being invisible)
 // [sort] Z position of the shader (a higher sort will be drawn over a lower sort)
-// [?alpha] The opacity of the shader (0 to 1 scaled, 1 being completely opaque, and 0 being invisible)
-// [?align] The alignment to use when drawing the position of the shader relative to the screen. ex: TOP_CENTER.
-// [?relative] The relative offset to use for drawing the shader, relative to the shader. (ie: center means to subtract half the width/height from the draw pos)
+// [?align] The alignment to use when drawing the position of the element relative to its size. (center means to subtract half the width/height from the draw pos)
+// [?relative] The relative position to use when placing the element on the screen (ie: TOPRIGHT)
 // [?isLevel] Determines if the hud element is to be drawn on a specific client, or for all clients.
 // Create an icon and return it.
-Icon(x, y, width, height, shader, color, sort, alpha = 1, align = "center", relative = "center", isLevel = false)
+Icon(shader, x, y, width, height, color, alpha, sort, align = "center", relative = "center", isLevel = false)
 {
     if(isLevel)
-        boxElem = maps\mp\gametypes\_hud_util::createServerIcon(shader, width, height);
+        icon = maps\mp\gametypes\_hud_util::createServerIcon(shader, width, height);
     else
-        boxElem = self maps\mp\gametypes\_hud_util::createIcon(shader, width, height);
+        icon = self maps\mp\gametypes\_hud_util::createIcon(shader, width, height);
     
-    boxElem maps\mp\gametypes\_hud_util::setPoint(align, relative, x, y);
-    boxElem.alpha = alpha;
+    icon maps\mp\gametypes\_hud_util::setPoint(align, relative, x, y);
     
-    return boxElem;
+    icon.color          = color;
+    icon.alpha          = alpha;
+    icon.sort           = sort;
+    
+    icon.hideWhenInMenu = true;
+    
+    return icon;
+}
+
+// [CALLER] player
+// [string] The text you want the string to display
+// [x] X position of the text (relative to the align input)
+// [y] Y position of the text (relative to the align input)
+// [font] The font of the text
+// [fontscale] The scale of the font for the text
+// [color] The color tint of the text
+// [alpha] The opacity of the text (0 to 1 scaled, 1 being completely opaque, and 0 being invisible)
+// [sort] Z position of the text (a higher sort will be drawn over a lower sort)
+// [?align] The alignment to use when drawing the position of the element relative to its size. (center means to subtract half the width/height from the draw pos)
+// [?relative] The relative position to use when placing the element on the screen (ie: TOPRIGHT)
+// [?isLevel] Determines if the hud element is to be drawn on a specific client, or for all clients.
+// Create a text element and return it.
+Text(string, x, y, font, fontScale, color, alpha, sort, align = "center", relative = "center", isLevel = false)
+{
+    if(isLevel)
+        text = self maps\mp\gametypes\_hud_util::createServerFontString(font, fontScale);
+    else
+        text = self maps\mp\gametypes\_hud_util::createFontString(font, fontScale);
+    
+    text maps\mp\gametypes\_hud_util::setPoint(align, relative, x, y);
+    text SetText(string);
+    
+    text.color          = color;
+    text.alpha          = alpha;
+    text.sort           = sort;
+    
+    text.hideWhenInMenu = true;
+
+    return text;
 }
 #endregion
 
