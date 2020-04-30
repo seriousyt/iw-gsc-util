@@ -1,7 +1,11 @@
 /*
     serious mw3 utility
     youtube.com/anthonything
+    
+    Note: Please remember to thread SeriousUtil() in your init function, or some functions will not work correctly.
 */
+
+#include maps\mp\gametypes\_hud_util;
 
 #region Defines
     
@@ -97,6 +101,32 @@ IsButtonPressed(button)
 bool(variable)
 {
     return isdefined(variable) && int(variable);
+}
+
+// [CALLER] player
+// [x] X position of the shader (relative to the align input)
+// [y] Y position of the shader (relative to the align input)
+// [width] Width of the shader
+// [height] Height of the shader
+// [shader] The shader to draw (image). Note: This must be precached in init using 'precacheshader' for it to show up correctly.
+// [color] Tint of the shader
+// [sort] Z position of the shader (a higher sort will be drawn over a lower sort)
+// [?alpha] The opacity of the shader (0 to 1 scaled, 1 being completely opaque, and 0 being invisible)
+// [?align] The alignment to use when drawing the position of the shader relative to the screen. ex: TOP_CENTER.
+// [?relative] The relative offset to use for drawing the shader, relative to the shader. (ie: center means to subtract half the width/height from the draw pos)
+// [?isLevel] Determines if the hud element is to be drawn on a specific client, or for all clients.
+// Create an icon and return it.
+Icon(x, y, width, height, shader, color, sort, alpha = 1, align = "center", relative = "center", isLevel = false)
+{
+    if(isLevel)
+        boxElem = maps\mp\gametypes\_hud_util::createServerIcon(shader, width, height);
+    else
+        boxElem = self maps\mp\gametypes\_hud_util::createIcon(shader, width, height);
+    
+    boxElem maps\mp\gametypes\_hud_util::setPoint(align, relative, x, y);
+    boxElem.alpha = alpha;
+    
+    return boxElem;
 }
 #endregion
 
