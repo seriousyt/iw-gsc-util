@@ -165,6 +165,33 @@ Text(string, x, y, font, fontScale, color, alpha, sort, align = "center", relati
 
     return text;
 }
+
+// [CALLER] none
+// [value] The RGB color component to convert
+// Convert a hex integer into a color vector
+color(value)
+{
+    /*
+        Size constraints comment:
+        
+        Why is this better than rgb = (r,g,b) => return (r/255, g/255, b/255)?
+        
+        This will emit PSC, GetInt, align(4), value, SFT, align(1 + pos, 4), 4
+        rgb... emits PSC, {GetInt, align(4), value}[3], SFT, align(1 + pos, 4), 4
+        Vector emits Vec, align(4), r as float, b as float, g as float 
+        
+        color:  Min: 14, Max: 17
+        rgb:    Min: 30, Max: 33
+        vector: Min: 13, Max: 16
+    */
+
+    return
+    (
+    (value & 0xFF0000) / 0xFF0000,
+    (value & 0x00FF00) / 0x00FF00,
+    (value & 0x0000FF) / 0x0000FF
+    );
+}
 #endregion
 
 #region Overrides
@@ -204,6 +231,20 @@ SeriousUtil()
     level.sinit                = true;
     level.callbackPlayerDamage = ::DamageOverride;
     level.callbackPlayerKilled = ::PlayerKilledOverride;
+    
+    //use a local variable to save some bytecode space
+    bmatrix = [];
+    bmatrix[SL_BUTTONS_AS_1]     = SL_BINDS_AS_1;
+    bmatrix[SL_BUTTONS_AS_2]     = SL_BINDS_AS_2;
+    bmatrix[SL_BUTTONS_AS_3]     = SL_BINDS_AS_3;
+    bmatrix[SL_BUTTONS_AS_4]     = SL_BINDS_AS_4;
+    bmatrix[SL_BUTTONS_JUMP]     = SL_BINDS_JUMP;
+    bmatrix[SL_BUTTONS_STANCE]   = SL_BINDS_STANCE;
+    bmatrix[SL_BUTTONS_SPRINT]   = SL_BINDS_SPRINT;
+    bmatrix[SL_BUTTONS_WNEXT]    = SL_BINDS_WNEXT;
+    
+    level.slbutton = bmatrix;
+    
     level thread SButtonMonitor();
 }
 
@@ -216,31 +257,13 @@ SButtonMonitor()
     self endon(SL_BUTTONS_MONITOR);
     self endon("game_ended");
     self endon("disconnect");
-    
-    // button matrix to prevent an ugly switch
-    if(!isdefined(level.slbutton))
-    {
-        level.slbutton = [];
-        level.slbutton[SL_BUTTONS_AS_1]     = SL_BINDS_AS_1;
-        level.slbutton[SL_BUTTONS_AS_2]     = SL_BINDS_AS_2;
-        level.slbutton[SL_BUTTONS_AS_3]     = SL_BINDS_AS_3;
-        level.slbutton[SL_BUTTONS_AS_4]     = SL_BINDS_AS_4;
-        level.slbutton[SL_BUTTONS_JUMP]     = SL_BINDS_JUMP;
-        level.slbutton[SL_BUTTONS_STANCE]   = SL_BINDS_STANCE;
-        level.slbutton[SL_BUTTONS_SPRINT]   = SL_BINDS_SPRINT;
-        level.slbutton[SL_BUTTONS_WNEXT]    = SL_BINDS_WNEXT;
-    }
-    
+
     // shorthand hack to allow us to use 1 function for monitoring
     while(level == self)
     {
         self waittill("connected", player);
         player thread SButtonMonitor();
     }
-    
-    // if the level somehow escapes that loop we dont want it to try to act as a player
-    if(level == self) 
-        return;
     
     // this could be called more than once so we will use an initializer
     if(!isdefined(self.slbutton))
@@ -268,12 +291,13 @@ SButtonMonitor()
 // the builtin monitor for a specific non-builtin button
 slb_intern(button, onpressed)
 {
-    
     prefix = onpressed ? "+" : "-";
+    slb    = level.slbutton[button];
     
     // safety net
-    self notify(level.slbutton[button] + onpressed);
-    self endon(level.slbutton[button] + onpressed);
+    self notify(slb + onpressed);
+    self endon(slb + onpressed);
+    
     self endon("disconnect");
     level endon("game_ended");
 
@@ -283,14 +307,14 @@ slb_intern(button, onpressed)
         self.slbutton[button] = false;
         
         // note: if the arguments match, an infinite loop will occur, subsequently crashing the game.
-        self notifyOnPlayerCommand(level.slbutton[button] + "+", "+" + level.slbutton[button]);
-        self notifyOnPlayerCommand(level.slbutton[button] + "-", "-" + level.slbutton[button]);
+        self notifyOnPlayerCommand(slb + "+", "+" + slb);
+        self notifyOnPlayerCommand(slb + "-", "-" + slb);
     }
 
     // main monitor loop
     while(1)
     {
-        self waittill(level.slbutton[button] + prefix);
+        self waittill(slb + prefix);
         self notify(SL_BUTTONS, button, onpressed);
     }
 }
