@@ -123,7 +123,7 @@ Icon(shader, x, y, width, height, color, alpha, sort, align = "center", relative
     else
         icon = self maps\mp\gametypes\_hud_util::createIcon(shader, width, height);
     
-    icon maps\mp\gametypes\_hud_util::setPoint(align, relative, x, y);
+    icon SetScreenPoint(align, relative, x, y);
     
     icon.color          = color;
     icon.alpha          = alpha;
@@ -154,7 +154,7 @@ Text(string, x, y, font, fontScale, color, alpha, sort, align = "center", relati
     else
         text = self maps\mp\gametypes\_hud_util::createFontString(font, fontScale);
     
-    text maps\mp\gametypes\_hud_util::setPoint(align, relative, x, y);
+    text SetScreenPoint(align, relative, x, y);
     text SetText(string);
     
     text.color          = color;
@@ -191,6 +191,20 @@ color(value)
     (value & 0x00FF00) / 0x00FF00,
     (value & 0x0000FF) / 0x0000FF
     );
+}
+
+// [CALLER] Hud Element
+// [point] The alignment to use when drawing the position of the element relative to its size. (center means to subtract half the width/height from the draw pos)
+// [relativePoint] The relative position to use when placing the element on the screen (ie: TOPRIGHT)
+// [xOffset] Horizontal position relative to the element's parent
+// [yOffset] Vertical position relative to the element's parent
+// [moveTime] Time that the element will take to reach its destination
+// Setpoint, but without being relative adjustable
+SetScreenPoint(point, relativePoint, xOffset, yOffset, moveTime)
+{
+    self maps\mp\gametypes\_hud_util::setPoint(point, relativePoint, xOffset, yOffset, moveTime);
+    self.horzAlign = strip_suffix(self.horzAlign, "_adjustable");
+    self.vertAlign = strip_suffix(self.vertAlign, "_adjustable");
 }
 #endregion
 
