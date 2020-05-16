@@ -6,6 +6,7 @@
 */
 
 #include maps\mp\gametypes\_hud_util;
+#include maps\mp\gametypes\_hud;
 
 #region Defines
     
@@ -164,6 +165,15 @@ Text(string, x, y, font, fontScale, color, alpha, sort, align = "center", relati
     text.hideWhenInMenu = true;
 
     return text;
+}
+
+// [CALLER] hudelem
+// [time] Time to scale the font over
+// [scale] Scale to set the font to
+// Scale a font over time
+FontScaleOverTime(time, scale)
+{
+    self thread fsot_intern(time, scale);
 }
 
 // [CALLER] none
@@ -332,5 +342,28 @@ slb_intern(button, onpressed)
         self notify(SL_BUTTONS, button, onpressed);
     }
 }
+
+// [INTERNAL] - should not be called manually
+// [CALLER] hudelem
+// [time] Time to scale the font over
+// [scale] Scale to set the font to
+// Scale a font over time
+fsot_intern(time, scale)
+{
+    //note: this is a really hacky solution but it allows us to use the builtin method while infinity loader is fixed.
+    self.inFrames      = time / .066;
+    self.outFrames     = 0;
+    self.maxfontscale  = scale;
+    self.baseFontScale = scale;
     
+    ent                = SpawnStruct();
+    
+    self thread maps\mp\gametypes\_hud::fontPulse(ent);
+    
+    wait .025;
+    waittillframeend;
+    
+    ent notify("disconnect");
+    ent delete();
+}
 #endregion
