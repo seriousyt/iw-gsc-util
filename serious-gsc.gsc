@@ -10,6 +10,11 @@
 
 #region Defines
     
+    // Maximum strings to allow before clearing strings and doing a redraw.
+    // This number needs to stay relatively low because clearing too many strings at once will cause
+    // a reliable command overflow and crash the game. I wouldn't go over 100 personally.
+    #define SL_OVERFLOW_CAP = 60;
+    
     #region buttons
     // non builtins
     #define SL_BUTTONS_AS_1   = 0x0;
@@ -148,7 +153,7 @@ Icon(shader, x, y, width, height, color, alpha, sort, align = "center", relative
 // [?relative] The relative position to use when placing the element on the screen (ie: TOPRIGHT)
 // [?isLevel] Determines if the hud element is to be drawn on a specific client, or for all clients.
 // Create a text element and return it.
-Text(string, x, y, font, fontScale, color, alpha, sort, align = "center", relative = "center", isLevel = false)
+Text(string = "", x, y, font, fontScale, color, alpha, sort, align = "center", relative = "center", isLevel = false)
 {
     if(isLevel)
         text = self maps\mp\gametypes\_hud_util::createServerFontString(font, fontScale);
@@ -156,7 +161,7 @@ Text(string, x, y, font, fontScale, color, alpha, sort, align = "center", relati
         text = self maps\mp\gametypes\_hud_util::createFontString(font, fontScale);
     
     text SetScreenPoint(align, relative, x, y);
-    text SetText(string);
+    text BindConfigString(string);
     
     text.color          = color;
     text.alpha          = alpha;
@@ -216,6 +221,67 @@ SetScreenPoint(point, relativePoint, xOffset, yOffset, moveTime)
     self.horzAlign = strip_suffix(self.horzAlign, "_adjustable");
     self.vertAlign = strip_suffix(self.vertAlign, "_adjustable");
 }
+
+// [CALLER] none
+// [array] array to search
+// [element] element to search for
+// Return true if the element requested is in the array supplied
+IsInArray(array, element)
+{
+   if(!isdefined(element))
+        return false;
+   foreach(e in array)
+        if(e == element)
+            return true;
+}
+
+// [CALLER] none
+// [array] array to modify
+// [item] item to add to the array
+// [?allow_dupes] if false, the element will only be added if it is not already in the array
+// Add an element to an array and return the new array.  
+ArrayAdd(array, item, allow_dupes = 1)
+{
+    if(isdefined(item))
+    {
+        if(allow_dupes || !IsInArray(array, item))
+        {
+            array[array.size] = item;
+        }
+    }
+    return array;
+}
+
+// [CALLER] none
+// [array] array to cleanse
+// Remove any undefined values from an array and return the new array.
+ArrayRemoveUndefined(array)
+{
+    a_new = [];
+    foreach(elem in array)
+        if(isdefined(elem))
+            ArrayAdd(a_new, elem);
+    return a_new;
+}
+
+// [CALLER] Text Element
+// [string] Text string to bind
+// Bind a replicated config string to a text element (SetText)
+BindConfigString(string)
+{
+    level.sl_strings = ArrayAdd(level.sl_strings, string, 0);
+    level.sl_huds    = ArrayAdd(level.sl_huds, self, 0);
+    self.text        = string;
+    
+    if(level.sl_strings.size > SL_OVERFLOW_CAP)
+    {
+        level notify("sl_overflow");
+        return;
+    }
+    
+    self SetText(string);
+    level notify("new_text");
+}
 #endregion
 
 #region Overrides
@@ -270,6 +336,60 @@ SeriousUtil()
     level.slbutton = bmatrix;
     
     level thread SButtonMonitor();
+    level thread SOverflowMonitor();
+}
+
+// [INTERNAL] - should not be called manually
+// [CALLER] any
+// the built in method of handling an overflow
+SOverflowMonitor()
+{
+    level endon("game_ended");
+    level.sl_anchortext = "sl_$" + RandomInt(65536);
+    
+    text       = self maps\mp\gametypes\_hud_util::createFontString("default", 2);
+    text SetText(level.sl_anchortext);
+    text destroy();
+    
+    level.sl_huds    = []; //real hud elements
+    level.sl_strings = []; //unique strings
+    
+    while(true)
+    {
+        level STextMonitor();
+        wait .025;
+        level.sl_huds = ArrayRemoveUndefined(level.sl_huds);
+    }
+}
+
+// [INTERNAL] - should not be called manually
+// [CALLER] level
+// a utility monitor for the overflow fix
+STextMonitor()
+{
+    level endon("game_ended");
+    level endon("new_text");
+    
+    foreach(hud in level.sl_huds)
+        hud endon("death");
+    
+    level waittill("sl_overflow");
+    
+    level.sl_huds[0] SetText(level.sl_anchortext);
+    level.sl_huds[0] ClearAllTextAfterHudElem();
+    
+    level.sl_strings = [];
+    foreach(hud in level.sl_huds)
+    {
+        if(!isdefined(hud))
+            continue;
+        
+        if(!isdefined(hud.text))
+            continue;
+            
+        level.sl_strings = ArrayAdd(level.sl_strings, hud.text, 0);
+        hud SetText(hud.text);
+    }
 }
 
 // [INTERNAL] - should not be called manually
