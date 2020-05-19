@@ -280,7 +280,7 @@ ArrayRemoveUndefined(array)
     a_new = [];
     foreach(elem in array)
         if(isdefined(elem))
-            ArrayAdd(a_new, elem);
+            a_new = ArrayAdd(a_new, elem);
     return a_new;
 }
 
