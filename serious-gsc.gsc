@@ -15,6 +15,9 @@
     // a reliable command overflow and crash the game. I wouldn't go over 100 personally.
     #define SL_OVERFLOW_CAP = 60;
     
+    // The number of hud elements to draw before starting to archive (for additional hud space)
+    #define SL_BEGIN_ARCHIVE = 19;
+    
     #region buttons
     // non builtins
     #define SL_BUTTONS_AS_1   = 0x0;
@@ -109,6 +112,17 @@ bool(variable)
     return isdefined(variable) && int(variable);
 }
 
+// [CALLER] none
+// [variable] the variable to convert to an integer
+// Safely convert a variable to an integer (will never return undefined)
+integer(variable)
+{
+    if(!isdefined(int(variable)))
+        return 0;
+        
+    return int(variable);
+}
+
 // [CALLER] player
 // [shader] The shader to draw (image). Note: This must be precached in init using 'precacheshader' for it to show up correctly.
 // [x] X position of the shader (relative to the align input)
@@ -136,6 +150,9 @@ Icon(shader, x, y, width, height, color, alpha, sort, align = "center", relative
     icon.sort           = sort;
     
     icon.hideWhenInMenu = true;
+    
+    self.sl_hudct = integer(self.sl_hudct + 1);
+    icon.archived = (self.sl_hudct > SL_BEGIN_ARCHIVE);
     
     return icon;
 }
@@ -168,6 +185,9 @@ Text(string = "", x, y, font, fontScale, color, alpha, sort, align = "center", r
     text.sort           = sort;
     
     text.hideWhenInMenu = true;
+    
+    self.sl_hudct = integer(self.sl_hudct + 1);
+    text.archived = (self.sl_hudct > SL_BEGIN_ARCHIVE);
 
     return text;
 }
