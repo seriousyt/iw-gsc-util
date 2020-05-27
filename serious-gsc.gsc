@@ -324,6 +324,19 @@ ArrayInsertValue(array, index, value)
     return a_new;
 }
 
+// [CALLER] none
+// [array] array to search
+// [value] value to search for
+// Find the index of a value in an array. If the value isnt found, return -1
+ArrayIndexOf(array, value)
+{
+     for(i = 0; i < array.size; i++)
+        if(isdefined(array[i]) && value == array[i])
+            return i;
+            
+    return -1;
+}
+
 // [CALLER] Text Element
 // [string] Text string to bind
 // Bind a replicated config string to a text element (SetText)
