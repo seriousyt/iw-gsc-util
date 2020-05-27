@@ -273,14 +273,54 @@ ArrayAdd(array, item, allow_dupes = 1)
 }
 
 // [CALLER] none
-// [array] array to cleanse
+// [array] array to clean
 // Remove any undefined values from an array and return the new array.
 ArrayRemoveUndefined(array)
 {
     a_new = [];
     foreach(elem in array)
         if(isdefined(elem))
-            a_new = ArrayAdd(a_new, elem);
+            a_new[a_new.size] = elem;
+            
+    return a_new;
+}
+
+// [CALLER] none
+// [array] array to clean
+// [value] value to remove from the array
+// Remove all instances of value in array
+ArrayRemove(array, value)
+{
+    a_new = [];
+    
+    foreach(elem in array)
+        if(value != elem)
+            a_new[a_new.size] = elem;
+            
+    return a_new;
+}
+
+// [CALLER] none
+// [array] array to change
+// [index] index to use to insert the value
+// [value] value to insert into the array
+// Insert a value into an array
+ArrayInsertValue(array, index, value)
+{
+    a_new = [];
+    
+    for(i = 0; i < index; i++)
+    {
+        a_new[i] = array[i];
+    }
+    
+    a_new[index] = value;
+    
+    for(i = index + 1; i <= array.size; i++)
+    {
+        a_new[i] = array[i - 1];
+    }
+    
     return a_new;
 }
 
